@@ -267,7 +267,7 @@ PLATFORM_X11=no
 PLATFORM_QWS=maybe
 PLATFORM_QPA=maybe
 BUILD_ON_MAC=no
-if [ -d /System/Library/Frameworks/Carbon.framework ]; then
+if [ -d /System/Library/Frameworks/Cocoa.framework ]; then
     PLATFORM_MAC=maybe
     BUILD_ON_MAC=yes
 else
@@ -1144,7 +1144,7 @@ while [ "$#" -gt 0 ]; do
         VAL=no
         ;;
     #Qt style yes options
-    -incremental|-qvfb|-profile|-shared|-static|-sm|-xinerama|-xshape|-xsync|-xinput|-egl|-reduce-exports|-pch|-separate-debug-info|-stl|-freetype|-xcursor|-xfixes|-xrandr|-xrender|-mitshm|-fontconfig|-xkb|-nis|-qdbus|-dbus|-dbus-linked|-glib|-gstreamer|-gtkstyle|-cups|-iconv|-largefile|-h|-help|-v|-verbose|-debug|-release|-fast|-accessibility|-confirm-license|-gnumake|-framework|-qt3support|-debug-and-release|-exceptions|-cocoa|-carbon|-universal|-harfbuzz|-prefix-install|-silent|-armfpa|-optimized-qmake|-dwarf2|-reduce-relocations|-sse|-openssl|-openssl-linked|-ptmalloc|-xmlpatterns|-phonon|-phonon-backend|-multimedia|-audio-backend|-svg|-declarative|-declarative-debug|-javascript-jit|-script|-scripttools|-rpath|-force-pkg-config|-s60|-usedeffiles|-icu)
+    -incremental|-qvfb|-profile|-shared|-static|-sm|-xinerama|-xshape|-xsync|-xinput|-egl|-reduce-exports|-pch|-separate-debug-info|-stl|-freetype|-xcursor|-xfixes|-xrandr|-xrender|-mitshm|-fontconfig|-xkb|-nis|-qdbus|-dbus|-dbus-linked|-glib|-gstreamer|-gtkstyle|-cups|-iconv|-largefile|-h|-help|-v|-verbose|-debug|-release|-fast|-accessibility|-confirm-license|-gnumake|-framework|-qt3support|-debug-and-release|-exceptions|-cocoa|-universal|-universal2|-harfbuzz|-prefix-install|-silent|-armfpa|-optimized-qmake|-dwarf2|-reduce-relocations|-sse|-openssl|-openssl-linked|-ptmalloc|-xmlpatterns|-phonon|-phonon-backend|-multimedia|-audio-backend|-svg|-declarative|-declarative-debug|-javascript-jit|-script|-scripttools|-rpath|-force-pkg-config|-s60|-usedeffiles|-icu)
         VAR=`echo $1 | sed "s,^-\(.*\),\1,"`
         VAL=yes
         ;;
@@ -1599,14 +1599,6 @@ while [ "$#" -gt 0 ]; do
         ;;
     cocoa)
 #       do nothing - Cocoa is the default.
-        ;;
-    carbon)
-        if [ "$PLATFORM_MAC" = "yes" ] && [ "$VAL" = "yes" ]; then
-            CFG_MAC_CARBON="$VAL"
-            COMMANDLINE_MAC_CARBON="$VAL"
-        else
-            UNKNOWN_OPT=yes
-        fi
         ;;
     harfbuzz)
         if [ "$PLATFORM_MAC" = "yes" ] && [ "$CFG_MAC_CARBON" != "yes" ] && [ "$VAL" = "yes" ]; then
@@ -2862,12 +2854,8 @@ if [ -z "$PLATFORM" ]; then
     PLATFORM_NOTES=
     case "$UNAME_SYSTEM:$UNAME_RELEASE" in
      Darwin:*)
-        if [ "$PLATFORM_MAC" = "yes" -o "$PLATFORM_QPA" = "yes" ]; then
-          PLATFORM=macx-g++
-        # PLATFORM=macx-xcode
-        else
-          PLATFORM=darwin-g++
-        fi
+        # in all cases nowadays, macOS+clang combo shall be used instead
+        PLATFORM=macx-clang-libc++
         ;;
      AIX:*)
         #PLATFORM=aix-g++
@@ -3564,18 +3552,6 @@ if [ "$PLATFORM_MAC" = "yes" ] && [ "$PLATFORM" != "macx-xlc" ]; then
     fi
 else
     CFG_FRAMEWORK=no
-fi
-
-# Print a warning if configure was called with the 10.4u SDK option on Snow Leopard
-# with the default mkspec. The 10.4u SDK does not support gcc 4.2.
-if [ "$PLATFORM_MAC" = "yes" ] && [ '!' -z "$CFG_SDK" ]; then
-    # get the darwin version. 10.0.0 and up means snow leopard.
-    VERSION=`uname -r | tr '.' ' ' | awk '{print $1}'`
-    if [ "$VERSION" -gt 9 ] && [ `basename "$CFG_SDK"` == "MacOSX10.4u.sdk" ] && [ "$PLATFORM" == "macx-g++" ]; then
-        echo
-        echo "WARNING: The 10.4u SDK does not support gcc 4.2. Configure with -platform macx-g++40. "
-        echo
-    fi
 fi
 
 # x11 tests are done after qmake is built
@@ -4394,11 +4370,7 @@ Qt/Mac only:
     -Fstring ........... Add an explicit framework path.
     -fw string ......... Add an explicit framework.
 
-    -cocoa ............. [Deprecated] Cocoa is now enabled by default.
-
-    -carbon .............Build the Carbon version of Qt. 64-bit archs
-                         are not supported by carbon and will be built
-                         with cocoa
+    -cocoa ............. Cocoa is now enabled by default.
 
  *  -framework ......... Build Qt as a series of frameworks and
                          link tools against those frameworks.
@@ -4413,8 +4385,7 @@ Qt/Mac only:
                          Example values for <arch>: x86 ppc x86_64 ppc64
                          Multiple -arch arguments can be specified.
 
-    -sdk <sdk> ......... Build Qt using Apple provided SDK <sdk>. This option requires gcc 4.
-                         To use a different SDK with gcc 3.3, set the SDKROOT environment variable.
+    -sdk <sdk> ......... Build Qt using Apple provided SDK <sdk>.
 
     -harfbuzz .......... Use HarfBuzz to do text layout instead of Core Text when possible.
                          It is only available to Cocoa builds.
@@ -7204,15 +7175,6 @@ fi
 if [ "$PLATFORM_MAC" = "yes" ]; then
     VERSION=`uname -r | tr '.' ' ' | awk '{print $1}'`
     if [ "$VERSION" == 8 ]; then
-        CFG_MAC_COCOA="no";
-        CFG_MAC_CARBON="yes";
-    fi
-fi
-
-# select Carbon when using the 10.4u SDK
-if [ "$PLATFORM_MAC" = "yes" ] && [ -n "$CFG_SDK" ]; then
-    if [ `basename "$CFG_SDK"` == "MacOSX10.4u.sdk" ]; then
-        echo "Carbon on";
         CFG_MAC_COCOA="no";
         CFG_MAC_CARBON="yes";
     fi
