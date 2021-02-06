@@ -51,9 +51,11 @@ int internal_error = success; // enable dwarf on internal errors
 int main(int argc, const char **argv)
 {
     CFURLRef cfurl;
-    OSStatus err = LSFindApplicationForInfo(0, CFSTR("com.apple.Xcode"), 0, 0, &cfurl);
-    if (err != noErr)
-        return internal_error;
+    CFArrayRef availableurls = LSCopyApplicationURLsForBundleIdentifier(CFSTR("com.apple.Xcode"), NULL);
+    if (!availableurls)
+	return internal_error;
+    
+    cfurl = (CFURLRef)(CFArrayGetValueAtIndex(availableurls, 0));
     
     CFBundleRef bundle = CFBundleCreate(0, cfurl);
     if (bundle == 0)
